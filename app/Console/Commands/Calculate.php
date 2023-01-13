@@ -11,7 +11,7 @@ class Calculate extends Command
      *
      * @var string
      */
-    protected $signature = 'calculate:compute';
+    protected $signature = 'calculate:compute {input}';
 
     /**
      * The console command description.
@@ -40,15 +40,18 @@ class Calculate extends Command
      */
     public function handle()
     {
-        $input = $this->ask('Input'); //Get Input
+        $input = $this->argument('input'); //Get Input
         $input = str_replace(' ', '', $input); //Remove Spaces
         $temp = ''; // Temporary Digit Container
+        $temp2 = ''; // Temporary Operation Container
         $num = []; // List Digits
         $op = []; // List Operation
+        $operation = ['+','-','*','/','sqrt']; // List Valid Operation
         $total = 0; //Total Computation
         $valid = true;
         //Get each characters
         for ($i = 0; $i < strlen($input); $i++) {
+       
             if(is_numeric(substr($input, $i, 1)) || substr($input, $i, 1) == '.'){
                 // Set Temporary Digit Container
                 $temp .= substr($input, $i, 1);
@@ -58,85 +61,76 @@ class Calculate extends Command
                 }
             }
             else{
-                  if(substr($input, $i, 4) == 'sqrt'){
-                        $op[] = 'sqrt';
-                    }
-                    else{
-                        $op[] = substr($input, $i, 1);
-                    }
-                    $num[] = $temp; // Set Digit into array
-                    $temp = '';
+              $temp2 .= substr($input, $i, 1);
+              //validation operation
+              if(in_array($temp2,$operation)){
+                $op[] = $temp2;
+                $valid = true;
+                $num[] = $temp; // Set Digit into array
+                $temp = '';
+                $temp2 = '';
+              }
+              else{
+                $valid = false;
+              }
+                  
             }
         }
         if($valid){
           //Operation
-           for ($i = 0; $i < count($op); $i++) {
-          if($op[$i] == '+'){
-            if($i == 0){
-                $total = $num[$i] + $num[$i + 1];
+          for ($i = 0; $i < count($op); $i++) {
+            if($op[$i] == '+'){
+              if($i == 0){
+                  $total = $num[$i] + $num[$i + 1];
+              }
+              else{
+                  $total += $num[$i+ 1];
+              }
             }
-            else{
-                $total += $num[$i+ 1];
+            else if($op[$i] == '-'){
+              if($i == 0){
+                  $total = $num[$i] - $num[$i + 1];
+              }
+              else{
+                  $total -= $num[$i+ 1];
+              }
+            }
+            else if($op[$i] == '*'){
+              if($i == 0){
+                  $total = $num[$i] * $num[$i + 1];
+              }
+              else{
+                  $total *= $num[$i+ 1];
+              }
+            }
+            else if($op[$i] == '/'){
+              if($i == 0){
+                  $total = $num[$i] / $num[$i + 1];
+              }
+              else{
+                  $total /= $num[$i+ 1];
+              }
+            }
+            else if($op[$i] == 'sqrt'){
+              //Perfect Square root
+              if($i == 0){
+                  $total = sqrt($num[$i]);
+              }
+              else{
+                $total = sqrt($total);
+              }
             }
           }
-          else if($op[$i] == '-'){
-            if($i == 0){
-                $total = $num[$i] - $num[$i + 1];
-            }
-            else{
-                $total -= $num[$i+ 1];
-            }
-          }
-          else if($op[$i] == '*'){
-            if($i == 0){
-                $total = $num[$i] * $num[$i + 1];
-            }
-            else{
-                $total *= $num[$i+ 1];
-            }
-          }
-          else if($op[$i] == '/'){
-            if($i == 0){
-                $total = $num[$i] / $num[$i + 1];
-            }
-            else{
-                $total /= $num[$i+ 1];
-            }
-          }
-          else if($op[$i] == 'sqrt'){
-            //Perfect Square root
-            if($i == 0){
-                $total = $num[$i];
-                $x = 1;
-                $y = $total;
-                //Get Prime numbers
-                for($v = $x; $v < $y + 1; $v++) {
-                  $this->primenumber($v);
-                }
-                //Prime numbers
-                for($p = 0; $p < count($this->prime); $p++) {
-                   if(($this->prime[$p] * $this->prime[$p]) ==  $total ){
-                    $total = $this->prime[$p];
-                   }
-                }
-                // Manual Numbers
-                if($total == $num[$i]){
-                    for($p = 1; $p <= $total; $p++) {
-                  
-                        if(($p * $p) ==  $total ){
-                         $total = $p;
-                        }
-                      
-                     }
-                }
-
-            }
-         
-          }
+          //Result
+          $this->info('Result: '.$total);
+          return 0;
         }
+        else{
+          $this->info('Result: Invalid Operation');
+          return 1;
         }
-        //Result
-        $this->info('Result:  '.$total);
+   
+      
     }
 
     public function primenumber($MyNum) {
